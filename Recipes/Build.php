@@ -146,8 +146,15 @@ task('build:create_from_composer', function() {
     $tempArray["autoload"] = $tmp2;
     $tempArray["optimize-autoloader"] = true;
     $tmp3 = [];
-    $tmp3["post-update-cmd"] = array("axenox\\PackageManager\\StaticInstaller::composerFinishUpdate");
-    $tmp3["post-install-cmd"] = array("axenox\\PackageManager\\StaticInstaller::composerFinishInstall");
+    // Use the @php scripts only if the package manager of this build has them - older versions need the callbacks
+    $composerScript = $buildsPath . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'axenox' . DIRECTORY_SEPARATOR . 'packagemanager' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'composer-script.php';
+    if (is_file($composerScript)) {
+        $tmp3["post-update-cmd"] = array("Composer\\Config::disableProcessTimeout", "@php vendor/axenox/packagemanager/bin/composer-script.php composerFinishUpdate");
+        $tmp3["post-install-cmd"] = array("Composer\\Config::disableProcessTimeout", "@php vendor/axenox/packagemanager/bin/composer-script.php composerFinishInstall");
+    } else {
+        $tmp3["post-update-cmd"] = array("axenox\\PackageManager\\StaticInstaller::composerFinishUpdate");
+        $tmp3["post-install-cmd"] = array("axenox\\PackageManager\\StaticInstaller::composerFinishInstall");
+    }
     $tmp3["post-package-install"] = array("axenox\\PackageManager\\StaticInstaller::composerFinishPackageInstall");
     $tmp3["post-package-update"] = array("axenox\\PackageManager\\StaticInstaller::composerFinishPackageUpdate");
     $tempArray["scripts"] = $tmp3;
